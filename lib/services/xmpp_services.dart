@@ -14,7 +14,6 @@ class XMPPService {
 
       _channel.setMethodCallHandler((MethodCall call) async {
         if (call.method == 'onLog') {
-          print('onLog ${call.arguments}');
           callback?.call(call.arguments);
         }
       });
@@ -61,13 +60,13 @@ class XMPPService {
   static void onMessageReceived(Function(String from, String body) callback) {
     _channel.setMethodCallHandler((MethodCall call) async {
       if (call.method == 'onMessageReceived') {
-        print('onMessageReceived ${call.arguments}');
+        debugPrint('onMessageReceived ${call.arguments}');
         final String from = call.arguments['from'];
         final String body = call.arguments['body'];
         callback(from, body);
       }
       if (call.method == 'onListsMessages') {
-        print('onMessageSent ${call.arguments}');
+        debugPrint('onMessageSent ${call.arguments}');
       }
     });
   }
