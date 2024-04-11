@@ -1,51 +1,60 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_broadcasts/flutter_broadcasts.dart';
+import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:xmpp_chat/views/login.dart';
-import 'blocs/chat/chat_bloc.dart';
-import 'views/chat.dart';
+import 'package:whixp/whixp.dart';
+import 'package:xmpp_chat/ui/app.dart';
+import 'package:xmpp_chat/utils/credentials_xmpp.dart';
+import 'package:xmpp_chat/utils/xmpp_connection.dart';
 
-const platform = MethodChannel('samples.flutter.dev/battery');
+
+BroadcastReceiver receiver = BroadcastReceiver(
+  names: ["org.xrstudio.xmpp.flutter_xmpp.receivemessage"],
+);
 
 void main() async {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
+
+  Directory path = await getApplicationSupportDirectory();
+  String directoryPath = '${path.path}/whixp';
+
+  Hive.init(directoryPath);
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final whixp = Whixp(
+    "Juana@jix.im",
+    'Abcd1234@',
+
+    useTLS: false,
+    port: 5222,
+    onBadCertificateCallback: (cert) => true,
+    logger: Log(enableError: true, enableWarning: true),
+  );
+
+  whixp.connect();
+  whixp.addEventHandler('sessionStart', (_) {
+    whixp.sendPresence();
+    print("Sending message $_");
+    print(whixp.credentials);
+  });
 
 
-  final directory = await getApplicationDocumentsDirectory();
+  XmppConnection xmppConnection = XmppConnection(param);
+  await xmppConnection.start((error) {
+    if (kDebugMode) {
+      debugPrint("Error: $error");
+    }
+  });
+  await xmppConnection.login();
 
+  receiver.start();
 
-  runApp(MultiBlocProvider(
-    providers: [
-      BlocProvider(
-        create: (context) => ChatBloc(),
-      ),
-    ],
-    child: const MyApp(),
+  runApp(App(
+    xmppConnection: xmppConnection,
+    whixp: whixp,
   ));
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const Login(), // Add this line
-        '/chat': (context) => const Chat(),
-      }
-
-
-    );
-  }
 }

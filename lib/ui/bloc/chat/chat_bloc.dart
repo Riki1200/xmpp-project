@@ -5,7 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:meta/meta.dart';
 
-import '../../services/xmpp_services.dart';
+import '../../../services/xmpp_services.dart';
 
 part 'chat_state.dart';
 
@@ -22,36 +22,18 @@ class ChatBloc extends Cubit<ChatState> {
     emit(state.copyWith(message: message));
   }
 
-
   Future<void> subscriberReceiveMessage() async {
     XMPPService.onMessageReceived((String from, String body) {
-
-
-      print('from: $from');
-      print('body: $body');
-
       emit(state.copyWith(from: from, body: body));
-
     });
   }
 
-
-  void resetLogin() {
-    emit(state.copyWith(isLoading: false));
-  }
-
-
-
-  Future<void> loginChatEvent(String username, String password) async {
-
+  Future<void> attachXmppServer(String username, String password) async {
       emit(state.copyWith(isLoading: true, isError:  false));
-     await XMPPService.connect(username, password, callback: (bool isConnect) {
+      await XMPPService.connect(username, password, callback: (bool isConnect) {
         emit(state.copyWith(isConnect: isConnect, isError: isConnect ? false : true));
-
-          emit(state.copyWith(isLoading: false));
-
+        emit(state.copyWith(isLoading: false));
       });
-
   }
 
 
